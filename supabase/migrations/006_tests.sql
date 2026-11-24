@@ -9,7 +9,12 @@ language plpgsql as $f$
 begin
   execute 'reset role';
   perform set_config('request.jwt.claim.sub', p::text, true);
-  perform set_config('request.jwt.claims', json_build_object('sub', p::text, 'role', 'authenticated')::text, true);
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', p::text,
+    'role', 'authenticated',
+    'aal', 'aal2',
+    'amr', json_build_array(json_build_object('method', 'totp', 'timestamp', extract(epoch from now())::bigint))
+  )::text, true);
   execute 'set local role authenticated';
 end $f$;
 grant execute on function public._test_act(uuid) to public;
