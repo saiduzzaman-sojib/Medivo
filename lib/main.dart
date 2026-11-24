@@ -14,9 +14,9 @@ Future<void> main() async {
     return;
   }
 
-  await Supabase.initialize(
+   await Supabase.initialize(
     url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
+    publishableKey: Env.supabaseAnonKey,
   );
   runApp(const ProviderScope(child: MedivoApp()));
 }
