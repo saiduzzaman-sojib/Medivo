@@ -1,51 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/theme/app_colors.dart';
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
-void main() => runApp(const MedivoApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: MedivoApp()));
+}
 
-class MedivoApp extends StatelessWidget {
+/// App-wide theme mode. Dark by default, switchable later from Settings.
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
+
+class MedivoApp extends ConsumerWidget {
   const MedivoApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
       title: 'MEDIVO',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
-      home: const _ThemeCheck(),
-    );
-  }
-}
-
-class _ThemeCheck extends StatelessWidget {
-  const _ThemeCheck();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.mc;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/medivo_logo.png', width: 120),
-            const SizedBox(height: 16),
-            const Text('MEDIVO',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: 4)),
-            const SizedBox(height: 6),
-            Text('Theme and logo check', style: TextStyle(color: c.muted)),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 220,
-              child: FilledButton(onPressed: () {}, child: const Text('It works')),
-            ),
-          ],
-        ),
-      ),
+      themeMode: ref.watch(themeModeProvider),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

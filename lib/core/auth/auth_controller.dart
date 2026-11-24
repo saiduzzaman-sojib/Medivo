@@ -66,7 +66,7 @@ class AuthController extends Notifier<AuthState> {
     final ok = match != null && password == _demoPassword && code == _demoCode;
 
     if (ok) {
-      final found = match!;
+      final found = match;
       state = AuthState(
         user: AppUser(
           id: 'demo-${found.$1.name}',
