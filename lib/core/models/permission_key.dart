@@ -17,3 +17,11 @@ extension RoleKey on Role {
         Role.branchManager => 'branch_manager',
       };
 }
+
+/// Reads the database role name. Returns null for anything unknown.
+Role? roleFromKey(String key) {
+  for (final r in Role.values) {
+    if (r.key == key) return r;
+  }
+  return null;
+}

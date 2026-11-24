@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_controller.dart';
-import '../../core/models/permissions.dart';
 import '../../core/models/role.dart';
 import '../../core/theme/app_colors.dart';
 import 'medivo_card.dart';
 import 'status_chip.dart';
 
 /// Placeholder body for a tab that is built in a later step.
-/// It already shows exactly what the signed-in role may do on this page.
+/// It shows exactly what the server says the signed-in user may do here.
 class ModulePage extends ConsumerWidget {
   const ModulePage({
     super.key,
@@ -27,7 +26,8 @@ class ModulePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mc;
-    final user = ref.watch(authControllerProvider).user!;
+    final user = ref.watch(authControllerProvider).user;
+    if (user == null) return const SizedBox.shrink();
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
@@ -68,20 +68,20 @@ class ModulePage extends ConsumerWidget {
                   child: Row(
                     children: [
                       Icon(
-                        user.role.can(p) ? Icons.check_circle_rounded : Icons.lock_rounded,
+                        user.can(p) ? Icons.check_circle_rounded : Icons.lock_rounded,
                         size: 20,
-                        color: user.role.can(p) ? c.primary : c.muted,
+                        color: user.can(p) ? c.primary : c.muted,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           p.label,
-                          style: TextStyle(color: user.role.can(p) ? c.ink : c.muted),
+                          style: TextStyle(color: user.can(p) ? c.ink : c.muted),
                         ),
                       ),
                       StatusChip(
-                        label: user.role.can(p) ? 'Allowed' : 'Not allowed',
-                        color: user.role.can(p) ? c.primary : c.muted,
+                        label: user.can(p) ? 'Allowed' : 'Not allowed',
+                        color: user.can(p) ? c.primary : c.muted,
                       ),
                     ],
                   ),

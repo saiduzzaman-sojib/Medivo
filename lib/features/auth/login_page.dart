@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_controller.dart';
@@ -18,7 +17,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _code = TextEditingController();
   bool _hidePassword = true;
 
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -27,7 +25,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void dispose() {
     _email.dispose();
     _password.dispose();
-    _code.dispose();
     super.dispose();
   }
 
@@ -37,15 +34,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     await ref.read(authControllerProvider.notifier).signIn(
           email: _email.text,
           password: _password.text,
-          code: _code.text.trim(),
         );
-  }
-
-  void _fillDemo(String email) {
-    _email.text = email;
-    _password.text = 'Medivo@2026';
-    _code.text = '482913';
-    setState(() {});
   }
 
   InputDecoration _decoration(MedivoColors c, String label, IconData icon,
@@ -159,8 +148,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   TextFormField(
                     controller: _password,
                     obscureText: _hidePassword,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.password],
+                    onFieldSubmitted: (_) => _submit(),
                     decoration: _decoration(
                       c,
                       'Password',
@@ -177,22 +167,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     validator: (v) =>
                         (v ?? '').length >= 8 ? null : 'Use at least 8 characters.',
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _code,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.oneTimeCode],
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(6),
-                    ],
-                    onFieldSubmitted: (_) => _submit(),
-                    decoration:
-                        _decoration(c, '6-digit verification code', Icons.shield_outlined),
-                    validator: (v) =>
-                        (v ?? '').trim().length == 6 ? null : 'Enter the 6-digit code.',
                   ),
                   const SizedBox(height: 22),
                   FilledButton(
@@ -252,7 +226,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   if (kDebugMode) ...[
                     const SizedBox(height: 18),
-                    Text('Demo accounts (debug builds only)',
+                    Text('Fill the email (debug builds only)',
                         style: TextStyle(
                             color: c.muted, fontSize: 12, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 8),
@@ -262,13 +236,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       children: [
                         ActionChip(
                             label: const Text('Pharmacist'),
-                            onPressed: () => _fillDemo('pharmacist@medivo.test')),
+                            onPressed: () =>
+                                setState(() => _email.text = 'pharmacist@medivo.test')),
                         ActionChip(
                             label: const Text('Purchaser'),
-                            onPressed: () => _fillDemo('purchaser@medivo.test')),
+                            onPressed: () =>
+                                setState(() => _email.text = 'purchaser@medivo.test')),
                         ActionChip(
                             label: const Text('Branch manager'),
-                            onPressed: () => _fillDemo('manager@medivo.test')),
+                            onPressed: () =>
+                                setState(() => _email.text = 'manager@medivo.test')),
                       ],
                     ),
                   ],

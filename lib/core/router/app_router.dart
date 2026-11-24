@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/login_page.dart';
+import '../../features/auth/splash_page.dart';
 import '../../features/forecast/forecast_page.dart';
 import '../../features/home/home_shell.dart';
 import '../../features/home/overview_page.dart';
@@ -23,16 +24,18 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {
-      final signedIn = ref.read(authControllerProvider).user != null;
-      final atLogin = state.matchedLocation == '/login';
-      if (!signedIn) return atLogin ? null : '/login';
-      if (atLogin) return '/home';
+      final auth = ref.read(authControllerProvider);
+      final loc = state.matchedLocation;
+      if (auth.initializing) return loc == '/splash' ? null : '/splash';
+      if (auth.user == null) return loc == '/login' ? null : '/login';
+      if (loc == '/login' || loc == '/splash') return '/home';
       return null;
     },
     routes: [
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => HomeShell(shell: shell),
