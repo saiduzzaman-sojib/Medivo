@@ -23,3 +23,27 @@ String sentenceCase(String s) {
   final t = s.replaceAll('_', ' ').trim();
   return t.isEmpty ? t : t[0].toUpperCase() + t.substring(1);
 }
+/// 2026-11-24, the format the database expects.
+String isoDate(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${_two(d.month)}-${_two(d.day)}';
+
+/// "24 Nov 2026" (no time zone shifting, for plain dates).
+String formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+
+/// Taka with Bangladeshi digit grouping: ৳12,34,567.
+String formatTaka(num value) {
+  final n = value.round();
+  var s = n.abs().toString();
+  if (s.length > 3) {
+    final last3 = s.substring(s.length - 3);
+    var rest = s.substring(0, s.length - 3);
+    final parts = <String>[];
+    while (rest.length > 2) {
+      parts.insert(0, rest.substring(rest.length - 2));
+      rest = rest.substring(0, rest.length - 2);
+    }
+    if (rest.isNotEmpty) parts.insert(0, rest);
+    s = '${parts.join(',')},$last3';
+  }
+  return '${n < 0 ? '-' : ''}৳$s';
+}
