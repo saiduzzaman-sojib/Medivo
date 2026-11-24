@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# MEDIVO secrets - never commit these
+.env
+.env.*
+*.jks
+*.keystore
+key.properties
+android/key.properties
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
+supabase/.env
+supabase/.temp/
