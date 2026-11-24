@@ -205,12 +205,21 @@ class AuthController extends Notifier<AuthState> {
         Map<String, dynamic>.from(data as Map),
         email: _client.auth.currentUser?.email ?? '',
       );
-            state = AuthState(user: user, stage: AuthStage.ready, restored: silent);
+                  state = AuthState(user: user, stage: AuthStage.ready, restored: silent);
+      if (!silent) unawaited(_logEvent('signed in'));
     } catch (_) {
       await _safeSignOut();
       state = AuthState(
         error: silent ? null : 'Could not load your access. Try again.',
       );
+    }
+  }
+    /// Writes a sign-in or sign-out entry to the audit chain.
+  Future<void> _logEvent(String event) async {
+    try {
+      await _client.rpc('log_session_event', params: {'p_event': event});
+    } catch (_) {
+      // The audit entry is best effort here. Sign-in must not fail because of it.
     }
   }
 
@@ -220,7 +229,8 @@ class AuthController extends Notifier<AuthState> {
     } catch (_) {}
   }
 
-  Future<void> signOut() async {
+    Future<void> signOut() async {
+    if (state.stage == AuthStage.ready) await _logEvent('signed out');
     state = const AuthState();
     await _safeSignOut();
   }
