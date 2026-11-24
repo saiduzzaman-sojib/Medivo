@@ -31,4 +31,21 @@ void main() {
     expect(redirectFor(s, '/mfa'), '/home');
     expect(redirectFor(s, '/plan'), isNull);
   });
+
+  test('a locked app shows only the lock page', () {
+    const s = AuthState(stage: AuthStage.ready);
+    expect(redirectFor(s, '/home', locked: true), '/locked');
+    expect(redirectFor(s, '/plan', locked: true), '/locked');
+    expect(redirectFor(s, '/locked', locked: true), isNull);
+  });
+
+  test('unlocking leaves the lock page', () {
+    const s = AuthState(stage: AuthStage.ready);
+    expect(redirectFor(s, '/locked'), '/home');
+  });
+
+  test('the lock does not override the sign-in steps', () {
+    const s = AuthState();
+    expect(redirectFor(s, '/home', locked: true), '/login');
+  });
 }

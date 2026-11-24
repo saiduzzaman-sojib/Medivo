@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_controller.dart';
 import '../../core/models/app_user.dart';
+import '../../core/security/app_lock.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/medivo_logo.dart';
 import '../../shared/widgets/status_chip.dart';
@@ -24,16 +25,69 @@ const _dests = <_Dest>[
 ];
 
 /// Phone: bottom NavigationBar. Tablet, desktop and web: NavigationRail.
-class HomeShell extends ConsumerWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  bool _asking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(appLockProvider).offer) _offerBiometric();
+    });
+  }
+
+  Future<void> _offerBiometric() async {
+    if (_asking || !mounted) return;
+    _asking = true;
+    final notifier = ref.read(appLockProvider.notifier);
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Turn on biometric unlock?'),
+        content: const Text(
+          'Use your fingerprint or face to reopen MEDIVO quickly after it locks. '
+          'You can change this later from the account menu.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Turn on'),
+          ),
+        ],
+      ),
+    );
+    if (yes == true) {
+      await notifier.setEnabled(true);
+    } else {
+      notifier.dismissOffer();
+    }
+    _asking = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<AppLockState>(appLockProvider, (prev, next) {
+      if (next.offer && !(prev?.offer ?? false)) _offerBiometric();
+    });
+
     final user = ref.watch(authControllerProvider).user;
     if (user == null) return const SizedBox.shrink();
 
+    final shell = widget.shell;
     final c = context.mc;
     final wide = MediaQuery.sizeOf(context).width >= 860;
     void go(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
@@ -101,6 +155,7 @@ class _Header extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.mc;
+    final lock = ref.watch(appLockProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
       child: Row(
@@ -119,8 +174,19 @@ class _Header extends ConsumerWidget {
             tooltip: 'Account',
             color: c.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onSelected: (v) {
-              if (v == 'out') ref.read(authControllerProvider.notifier).signOut();
+            onSelected: (v) async {
+              final lockCtl = ref.read(appLockProvider.notifier);
+              if (v == 'out') {
+                ref.read(authControllerProvider.notifier).signOut();
+              } else if (v == 'lock') {
+                lockCtl.lock();
+              } else if (v == 'bio') {
+                final ok = await lockCtl.setEnabled(!lock.enabled);
+                if (!context.mounted || ok) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Biometric check was not completed.')),
+                );
+              }
             },
             itemBuilder: (context) => [
               PopupMenuItem<String>(
@@ -135,6 +201,13 @@ class _Header extends ConsumerWidget {
                 ),
               ),
               const PopupMenuDivider(),
+              if (lock.available)
+                CheckedPopupMenuItem<String>(
+                  value: 'bio',
+                  checked: lock.enabled,
+                  child: const Text('Biometric unlock'),
+                ),
+              const PopupMenuItem<String>(value: 'lock', child: Text('Lock now')),
               const PopupMenuItem<String>(value: 'out', child: Text('Sign out')),
             ],
             child: CircleAvatar(

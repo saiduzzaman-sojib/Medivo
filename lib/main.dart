@@ -4,7 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
 import 'core/router/app_router.dart';
+import 'core/storage/secure_session_storage.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/idle_guard.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +16,10 @@ Future<void> main() async {
     return;
   }
 
-   await Supabase.initialize(
+  await Supabase.initialize(
     url: Env.supabaseUrl,
     publishableKey: Env.supabaseAnonKey,
+    authOptions: FlutterAuthClientOptions(localStorage: SecureSessionStorage()),
   );
   runApp(const ProviderScope(child: MedivoApp()));
 }
@@ -36,6 +39,7 @@ class MedivoApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
+      builder: (context, child) => IdleGuard(child: child ?? const SizedBox.shrink()),
     );
   }
 }

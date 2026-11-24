@@ -17,6 +17,7 @@ class AuthState {
     this.error,
     this.failedAttempts = 0,
     this.lockedUntil,
+    this.restored = false,
   });
 
   final AppUser? user;
@@ -28,6 +29,8 @@ class AuthState {
   final String? error;
   final int failedAttempts;
   final DateTime? lockedUntil;
+  /// True when the session was found saved on the device at start-up.
+  final bool restored;
 }
 
 /// Data needed to show the QR code when a person sets up two-step verification.
@@ -202,7 +205,7 @@ class AuthController extends Notifier<AuthState> {
         Map<String, dynamic>.from(data as Map),
         email: _client.auth.currentUser?.email ?? '',
       );
-      state = AuthState(user: user, stage: AuthStage.ready);
+            state = AuthState(user: user, stage: AuthStage.ready, restored: silent);
     } catch (_) {
       await _safeSignOut();
       state = AuthState(
