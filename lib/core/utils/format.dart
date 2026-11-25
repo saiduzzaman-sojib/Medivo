@@ -47,3 +47,26 @@ String formatTaka(num value) {
   }
   return '${n < 0 ? '-' : ''}৳$s';
 }
+/// "5 Nov" for chart labels.
+String shortDate(DateTime d) => '${d.day} ${_months[d.month - 1]}';
+
+/// Short money for chart axes: ৳950, ৳1.5k, ৳2.5L (lakh), ৳1.2Cr (crore).
+String compactTaka(num v) {
+  final a = v.abs();
+  String trim(double x) {
+    final t = x.toStringAsFixed(1);
+    return t.endsWith('.0') ? t.substring(0, t.length - 2) : t;
+  }
+
+  final String s;
+  if (a >= 10000000) {
+    s = '${trim(a / 10000000)}Cr';
+  } else if (a >= 100000) {
+    s = '${trim(a / 100000)}L';
+  } else if (a >= 1000) {
+    s = '${trim(a / 1000)}k';
+  } else {
+    s = a.round().toString();
+  }
+  return '${v < 0 ? '-' : ''}৳$s';
+}
