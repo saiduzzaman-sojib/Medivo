@@ -14,6 +14,7 @@ import '../../shared/widgets/medivo_card.dart';
 import '../../shared/widgets/status_chip.dart';
 import 'audit_controller.dart';
 import 'data/audit_entry.dart';
+import 'widgets/security_cards.dart';
 
 class SecurityPage extends ConsumerWidget {
   const SecurityPage({super.key});
@@ -39,10 +40,14 @@ class SecurityPage extends ConsumerWidget {
                   .headlineSmall
                   ?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          Text('Your session and a tamper-evident record of every action.',
+          Text('Your session, live checks and a tamper-evident record of every action.',
               style: TextStyle(color: c.muted)),
           const SizedBox(height: 18),
           _SessionCard(user: user),
+          const SizedBox(height: 14),
+          const AcceptanceCard(),
+          const SizedBox(height: 14),
+          const RecoveryCard(),
           const SizedBox(height: 14),
           if (canAudit)
             const _AuditSection()
