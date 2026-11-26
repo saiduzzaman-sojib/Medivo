@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
+import 'core/offline/cache_store.dart';
+import 'core/offline/offline_cache_client.dart';
+import 'core/offline/offline_status.dart';
 import 'core/router/app_router.dart';
 import 'core/storage/secure_session_storage.dart';
 import 'core/theme/app_theme.dart';
@@ -16,11 +22,26 @@ Future<void> main() async {
     return;
   }
 
+  final cache = SecureCacheStore();
   await Supabase.initialize(
     url: Env.supabaseUrl,
     publishableKey: Env.supabaseAnonKey,
+    httpClient: OfflineCacheClient(
+      inner: http.Client(),
+      store: cache,
+      status: offlineStatus,
+    ),
     authOptions: FlutterAuthClientOptions(localStorage: SecureSessionStorage()),
   );
+
+  // Signing out removes every saved answer from this device.
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    if (data.event == AuthChangeEvent.signedOut) {
+      unawaited(cache.clear());
+      offlineStatus.markOnline();
+    }
+  });
+
   runApp(const ProviderScope(child: MedivoApp()));
 }
 

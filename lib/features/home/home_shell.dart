@@ -8,6 +8,7 @@ import '../../core/security/app_lock.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/medivo_logo.dart';
 import '../../shared/widgets/status_chip.dart';
+import 'offline_banner.dart';
 
 class _Dest {
   const _Dest(this.label, this.icon, this.selectedIcon);
@@ -118,7 +119,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             ),
             VerticalDivider(width: 1, color: c.line),
             Expanded(
-              child: Column(children: [header, Expanded(child: shell)]),
+              child: Column(
+                children: [header, const OfflineBanner(), Expanded(child: shell)],
+              ),
             ),
           ],
         ),
@@ -128,7 +131,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(children: [header, Expanded(child: shell)]),
+        child: Column(
+          children: [header, const OfflineBanner(), Expanded(child: shell)],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: shell.currentIndex,
