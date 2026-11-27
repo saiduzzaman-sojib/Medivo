@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,6 +13,16 @@ class SecureSessionStorage extends LocalStorage {
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
   );
 
+  /// Writes run one after another, so two session refreshes can never
+  /// write to the Keychain at the same moment.
+  Future<void> _queue = Future<void>.value();
+
+  Future<void> _enqueue(Future<void> Function() job) {
+    final next = _queue.then((_) => job());
+    _queue = next.catchError((_) {});
+    return next;
+  }
+
   @override
   Future<void> initialize() async {}
 
@@ -21,10 +34,17 @@ class SecureSessionStorage extends LocalStorage {
   Future<String?> accessToken() => _storage.read(key: supabasePersistSessionKey);
 
   @override
-  Future<void> persistSession(String persistSessionString) =>
-      _storage.write(key: supabasePersistSessionKey, value: persistSessionString);
+  Future<void> persistSession(String persistSessionString) => _enqueue(() async {
+        try {
+          await _storage.write(key: supabasePersistSessionKey, value: persistSessionString);
+        } on PlatformException {
+          // The Keychain says the item already exists. Remove the old one and write again.
+          await _storage.delete(key: supabasePersistSessionKey);
+          await _storage.write(key: supabasePersistSessionKey, value: persistSessionString);
+        }
+      });
 
   @override
   Future<void> removePersistedSession() =>
-      _storage.delete(key: supabasePersistSessionKey);
+      _enqueue(() => _storage.delete(key: supabasePersistSessionKey));
 }

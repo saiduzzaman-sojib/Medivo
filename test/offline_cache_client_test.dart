@@ -75,7 +75,11 @@ void main() {
     expect(saved.body, '[{"id":1}]');
     expect(saved.headers['x-medivo-offline'], '1');
     expect(h.status.state.offline, isTrue);
-    expect(h.status.state.savedAt, DateTime.utc(2026, 11, 24, 10));
+    // Compare the moment in time, so the result does not depend on the time zone.
+    expect(
+      h.status.state.savedAt!.isAtSameMomentAs(DateTime.utc(2026, 11, 24, 10)),
+      isTrue,
+    );
   });
 
   test('going back online clears the offline state', () async {
@@ -178,7 +182,7 @@ void main() {
     s.markOffline(DateTime.utc(2026, 11, 24, 10));
     s.markOffline(DateTime.utc(2026, 11, 24, 9));
     s.markOffline(DateTime.utc(2026, 11, 24, 11));
-    expect(s.state.savedAt, DateTime.utc(2026, 11, 24, 9));
+    expect(s.state.savedAt!.isAtSameMomentAs(DateTime.utc(2026, 11, 24, 9)), isTrue);
     s.markOnline();
     expect(s.state.offline, isFalse);
     expect(s.state.savedAt, isNull);
